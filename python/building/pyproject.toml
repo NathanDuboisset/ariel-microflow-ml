@@ -1,0 +1,14 @@
+[project]
+name = "ariel-os-tiny-ml-building"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+  "tensorflow",
+  "numpy",
+  "tensorflow-model-optimization",
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+

@@ -1,7 +1,0 @@
-Metadata-Version: 2.4
-Name: ariel-os-tiny-ml-building
-Version: 0.1.0
-Requires-Python: >=3.11
-Requires-Dist: tensorflow
-Requires-Dist: numpy
-Requires-Dist: tensorflow-model-optimization

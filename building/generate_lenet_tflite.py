@@ -1,19 +1,37 @@
 import argparse
+import os
 from pathlib import Path
+
+os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+# Suppress oneDNN informational messages from TensorFlow builds.
+os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 
 import numpy as np
 import tensorflow as tf
 
+# Further reduce TF's Python-side logging.
+try:
+    tf.get_logger().setLevel("ERROR")
+except Exception:
+    pass
+
+
+def find_repo_root() -> Path:
+    # Anchor on project files that should exist in the repo root.
+    # This makes `--out models/...` deterministic even if you run from `./building`.
+    import pyrootutils  # type: ignore[import-not-found]
+
+    return Path(
+        pyrootutils.find_root(search_from=__file__, indicator=["Cargo.toml", "laze-project.yml"])
+    )
+
 
 def build_lenet_keras() -> tf.keras.Model:
-    # LeNet-style model using ops that MicroFlow supports after conversion:
-    # - Conv2D + fused activation (use activation inside the layer)
-    # - AveragePooling2D
-    # - Avoid FullyConnected (MicroFlow fully_connected has QUANTS=1 restriction)
-    # - Use Conv2D as classifier head
-    # - Softmax as a dedicated op (via Keras Softmax layer)
-    # IMPORTANT: set `batch_size=1` to avoid dynamic shape ops (SHAPE /
-    # STRIDED_SLICE / PACK) that MicroFlow does not support.
+    # Classic LeNet-5 style model (Conv/AvgPool + Dense head).
+    #
+    # IMPORTANT: set `batch_size=1` and use fixed-size `Reshape` to avoid
+    # dynamic shape ops (SHAPE / STRIDED_SLICE / PACK) that MicroFlow does not
+    # support.
     inputs = tf.keras.Input(shape=(28, 28, 1), batch_size=1, name="input")
 
     x = tf.keras.layers.Conv2D(6, (5, 5), activation="relu", padding="valid")(inputs)
@@ -22,11 +40,12 @@ def build_lenet_keras() -> tf.keras.Model:
     x = tf.keras.layers.Conv2D(16, (5, 5), activation="relu", padding="valid")(x)
     x = tf.keras.layers.AveragePooling2D(pool_size=(2, 2), strides=(2, 2))(x)
 
-    # Classifier head without Dense:
-    # Current feature map is 4x4x16. A 4x4 valid conv to 10 channels yields 1x1x10.
-    x = tf.keras.layers.Conv2D(10, (4, 4), activation=None, padding="valid", name="head")(x)
-    x = tf.keras.layers.Reshape((10,), name="logits_10")(x)
-    outputs = tf.keras.layers.Softmax()(x)
+    # 4x4x16 -> 256
+    x = tf.keras.layers.Reshape((256,), name="flatten_256")(x)
+    x = tf.keras.layers.Dense(120, activation="relu", name="fc1")(x)
+    x = tf.keras.layers.Dense(84, activation="relu", name="fc2")(x)
+    logits = tf.keras.layers.Dense(10, name="fc3")(x)
+    outputs = tf.keras.layers.Softmax()(logits)
 
     return tf.keras.Model(inputs=inputs, outputs=outputs, name="lenet")
 
@@ -38,9 +57,63 @@ def representative_dataset(images: np.ndarray, samples: int):
         yield [img]
 
 
+def export_iree_mlir(tflite_path: Path, mlir_path: Path) -> bool:
+    # Try the IREE Python API first. Depending on your TF + iree versions, the
+    # python API may hit a TensorFlow MLIR NameError. If that happens, fall
+    # back to executing the `iree-import-tflite` module directly via `runpy`.
+    # Docs: https://iree-python-api.readthedocs.io/en/latest/compiler/tools.html
+    mlir_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        import iree.compiler.tools.tflite as iree_tflite 
+
+        # `import_only=True` writes textual MLIR if `output_file` is provided.
+        iree_tflite.compile_file(
+            str(tflite_path),
+            import_only=True,
+            output_file=str(mlir_path),
+            output_format="mlir-text",
+        )
+        print("Wrote:", str(mlir_path))
+        return True
+    except Exception as e:
+        print("IREE: Python API MLIR export failed, falling back:", repr(e))
+
+    # Fallback: run the importer as a python module (no shelling out).
+    try:
+        import runpy
+        import sys
+
+        old_argv = sys.argv
+        sys.argv = [
+            "iree-import-tflite",
+            str(tflite_path),
+            "-o",
+            str(mlir_path),
+        ]
+        runpy.run_module(
+            "iree.tools.tflite.scripts.iree_import_tflite",
+            run_name="__main__",
+        )
+        sys.argv = old_argv
+        print("Wrote:", str(mlir_path))
+        return True
+    except Exception as e:
+        print("IREE: MLIR export fallback also failed:", repr(e))
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train + quantize LeNet to int8 TFLite.")
     parser.add_argument("--out", type=str, default="models/lenet_int8.tflite")
+    parser.add_argument("--iree-mlir-out", type=str, default="models/lenet_int8.mlir")
+    parser.add_argument("--no-iree-mlir", action="store_true")
+    parser.add_argument(
+        "--quantization",
+        choices=["per-tensor", "per-channel"],
+        default="per-tensor",
+        help="Quantization granularity. MicroFlow FullyConnected requires per-tensor (QUANTS=1).",
+    )
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--rep-samples", type=int, default=100)
@@ -50,7 +123,10 @@ def main():
     tf.random.set_seed(args.seed)
     np.random.seed(args.seed)
 
+    repo_root = find_repo_root()
     out_path = Path(args.out)
+    if not out_path.is_absolute():
+        out_path = repo_root / out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     (x_train, y_train), (x_test, y_test) = tf.keras.datasets.mnist.load_data()
@@ -88,14 +164,36 @@ def main():
     converter.target_spec.supported_types = [tf.int8]
     converter.inference_input_type = tf.int8
     converter.inference_output_type = tf.int8
-    # MicroFlow's `fully_connected()` implementation only supports tensors with
-    # a single quantization parameter (QUANTS=1). Many TFLite exports use
-    # per-channel weight quantization for Dense layers (QUANTS > 1), which
-    # breaks type-checking during the MicroFlow macro expansion.
-    converter._experimental_disable_per_channel = True
+
+    # MicroFlow's `fully_connected()` implementation expects Tensor2D<..., QUANTS=1>.
+    # That means Dense weights must be per-tensor quantized (single scale/zero-point).
+    #
+    # Note: different TF versions/quantizers expose this knob under slightly
+    # different attribute names. We set what we can, best-effort.
+    disable_per_channel = args.quantization == "per-tensor"
+    for attr in (
+        "_experimental_disable_per_channel",
+        "_experimental_disable_per_channel_quantization",
+    ):
+        if hasattr(converter, attr):
+            setattr(converter, attr, disable_per_channel)
+
+    # Some TF releases route through a “new quantizer”; ensure we don’t ignore
+    # the per-channel disable setting by forcing the legacy path if available.
+    for attr in ("experimental_new_quantizer", "_experimental_new_quantizer"):
+        if hasattr(converter, attr):
+            # Legacy quantizer tends to respect per-tensor better for some ops.
+            setattr(converter, attr, False)
 
     tflite_model = converter.convert()
     out_path.write_bytes(tflite_model)
+    print("Wrote:", str(out_path))
+
+    if not args.no_iree_mlir:
+        mlir_out = Path(args.iree_mlir_out)
+        if not mlir_out.is_absolute():
+            mlir_out = repo_root / mlir_out
+        export_iree_mlir(out_path, mlir_out)
 
     # Quick sanity check: input/output dtypes should be int8.
     # We pass an explicit empty delegate list so that operator lists don't
@@ -106,7 +204,6 @@ def main():
     input_details = interpreter.get_input_details()[0]
     output_details = interpreter.get_output_details()[0]
 
-    print("Wrote:", str(out_path))
     print("TFLite input dtype:", input_details["dtype"], "shape:", input_details["shape"])
     print(
         "TFLite output dtype:",
@@ -114,6 +211,22 @@ def main():
         "shape:",
         output_details["shape"],
     )
+
+    # Quantization sanity: detect per-channel quantized tensors (scales length > 1).
+    # If these show up on FC weights, MicroFlow will not type-check.
+    try:
+        per_channel = []
+        for td in interpreter.get_tensor_details():
+            qp = td.get("quantization_parameters") or {}
+            scales = qp.get("scales")
+            if isinstance(scales, np.ndarray) and scales.size > 1:
+                per_channel.append((td.get("name", "?"), int(scales.size)))
+        if per_channel:
+            print("Warning: per-channel quantization detected (name, scales_len):")
+            for name, n in per_channel[:30]:
+                print(" -", name, n)
+    except Exception as e:  # pragma: no cover
+        print("Warning: could not inspect quantization parameters:", repr(e))
 
     # Operator smoke-check: MicroFlow will only compile models containing a subset
     # of TFLite ops. We try to extract op names from the interpreter internals.

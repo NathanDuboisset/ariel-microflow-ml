@@ -1,60 +1,68 @@
-#![no_main]
+    #![no_main]
 #![no_std]
 
 use ariel_os::debug::{exit, log::info, ExitCode};
-use ariel_os::time::{Instant, TICK_HZ};
+use ariel_os::time::Instant;
 use microflow::model;
 use nalgebra::SMatrix;
 
-#[model("models/lenet_int8.tflite")]
-struct LeNet;
+// Exactly one architecture feature overall.
+#[cfg(not(any(feature = "lenet5", feature = "mcunet")))]
+compile_error!("Enable exactly one model feature: lenet5 | mcunet");
 
-const BENCH_ITERS: u64 = 500;
+#[cfg(all(feature = "lenet5", feature = "mcunet"))]
+compile_error!("Enable exactly one model feature: lenet5 | mcunet");
 
+#[cfg(feature = "lenet5")]
+#[model("models/lenet5_quantized.tflite")]
+struct MyModel;
+#[cfg(feature = "mcunet")]
+#[model("models/mcunet_quantized.tflite")]
+
+struct MyModel;
+#[cfg(feature = "lenet5")]
 fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
     type Img = SMatrix<[f32; 1], 28, 28>;
     let img: Img = SMatrix::from_fn(|r, c| {
-        // A simple deterministic pattern. The exact values don't matter for toolchain validation.
         let v = if ((r + c) & 1) == 0 { 0.5 } else { 0.0 };
         [v]
     });
     [img]
 }
 
-#[ariel_os::task(autostart)]
-async fn main() {
+#[cfg(feature = "mcunet")]
+fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
+    type Img = SMatrix<[f32; 3], 32, 32>;
+    let img: Img = SMatrix::from_fn(|r, c| {
+        let base: f32 = if ((r + c) & 1) == 0 { 0.6_f32 } else { 0.1_f32 };
+        let r = base;
+        let g = (base * 0.7_f32).min(1.0_f32);
+        let b = (base * 0.4_f32).min(1.0_f32);
+        [r, g, b]
+    });
+    [img]
+}
+
+#[cfg_attr(feature = "lenet5", ariel_os::thread(autostart, priority = 2, stacksize = 4000))]
+#[cfg_attr(feature = "mcunet", ariel_os::thread(autostart, priority = 2, stacksize = 100000))]
+fn main() {
     info!(
-        "Hello from main()! Running on a {} board.",
+        "microflow on {} board.",
         ariel_os::buildinfo::BOARD
     );
+    #[cfg(feature = "lenet5")]
+    info!("Model: lenet5_quantized (models/lenet5_quantized.tflite)");
+    #[cfg(feature = "mcunet")]
+    info!("Model: mcunet_quantized (models/mcunet_quantized.tflite)");
 
-    let input = make_input_sample();
-
-    // Timing: simple start/finish using Ariel OS time (embassy-time based).
     let start = Instant::now();
-    for _ in 0..BENCH_ITERS {
-        let _ = LeNet::predict(core::hint::black_box(input));
-    }
+    let input = make_input_sample();
+    let prediction = MyModel::predict(core::hint::black_box(input));
     let end = Instant::now();
 
-    let dt_ticks: u64 = end.as_ticks().wrapping_sub(start.as_ticks());
-    let mean_ticks = dt_ticks / BENCH_ITERS;
-    let dt_us: u64 = dt_ticks.saturating_mul(1_000_000) / (TICK_HZ as u64);
-    let mean_us: u64 = mean_ticks.saturating_mul(1_000_000) / (TICK_HZ as u64);
-
-    info!(
-        "Inference timing: iters={} total_ticks={} total_us={} mean_ticks={} mean_us={}",
-        BENCH_ITERS,
-        dt_ticks,
-        dt_us,
-        mean_ticks,
-        mean_us
-    );
-
-    let prediction = LeNet::predict(input);
+    let dt_us: u64 = end.as_micros().wrapping_sub(start.as_micros());
 
     let predicted_class = if prediction.nrows() == 1 {
-        // Expected for classifiers: [1, num_classes]
         let mut best_col: usize = 0;
         let mut best_val = prediction[(0, 0)];
         for c in 1..prediction.ncols() {
@@ -66,7 +74,6 @@ async fn main() {
         }
         best_col
     } else if prediction.ncols() == 1 {
-        // Fallback: [num_classes, 1]
         let mut best_row: usize = 0;
         let mut best_val = prediction[(0, 0)];
         for r in 1..prediction.nrows() {
@@ -78,11 +85,11 @@ async fn main() {
         }
         best_row
     } else {
-        // Generic fallback: flatten across the whole matrix.
         prediction.iamax_full().1
     };
 
-    info!("Predicted class: {}", predicted_class);
+    info!("Inference timing: total_us={}", dt_us);
+    info!("Last predicted class={}", predicted_class);
 
     exit(ExitCode::SUCCESS);
 }

@@ -3,14 +3,18 @@ name = "ariel-os-tiny-ml-building"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-  "tensorflow[and-cuda]==2.21.0",
+  "tensorflow[and-cuda]==2.18.0",
   "numpy",
   "tensorflow-model-optimization",
-  "pyrootutils",
+  # IREE SavedModel -> MLIR import.
   "iree-compiler",
-  "iree-tools-tflite>=20260316.1567",
-  "iree-tools-tf>=20260316.1567",
-  "iree-runtime>=20241104.1068",
+  "iree-tools-tf",
+  # ONNX export (for conda iree-import-onnx pipeline).
+  "tf2onnx",
+  "onnx==1.16.1",
+  # Notebook support
+  "ipykernel",
+  "jupyter",
 ]
 
 [build-system]

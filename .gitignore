@@ -2,3 +2,8 @@
 /build
 .gdb_history
 **/*.egg-info/
+.ipynb_checkpoints/
+building/.venv/
+models/*.tflite
+models/*.onnx
+models/*.mlir

@@ -1,7 +1,0 @@
-generate_lenet_tflite.py
-pyproject.toml
-ariel_os_tiny_ml_building.egg-info/PKG-INFO
-ariel_os_tiny_ml_building.egg-info/SOURCES.txt
-ariel_os_tiny_ml_building.egg-info/dependency_links.txt
-ariel_os_tiny_ml_building.egg-info/requires.txt
-ariel_os_tiny_ml_building.egg-info/top_level.txt

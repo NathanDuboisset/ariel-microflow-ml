@@ -10,6 +10,10 @@ microflow = { version = "0.1.3", default-features = false }
 nalgebra = { version = "0.32", default-features = false }
 
 [features]
+default = []
+lenet5 = []
+mcunet = []
+
 # Exactly one of these modes is typically enabled by `laze build ... run`.
 # We don't use them directly in the code, but `laze` expects them to exist.
 run = []

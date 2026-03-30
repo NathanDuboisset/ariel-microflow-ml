@@ -1,8 +1,0 @@
-tensorflow[and-cuda]==2.21.0
-numpy
-tensorflow-model-optimization
-pyrootutils
-iree-compiler
-iree-tools-tflite>=20260316.1567
-iree-tools-tf>=20260316.1567
-iree-runtime>=20241104.1068

@@ -8,6 +8,8 @@ apps:
   - name: ariel-os-tiny-ml
     selects:
       - alloc
+      - sw/threading
+      - ?multi-core
     # Mirror `ariel-os-hello` defaults to make the runner happy.
     env:
       global:

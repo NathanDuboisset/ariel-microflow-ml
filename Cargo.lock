@@ -36,10 +36,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "ariel-microflow-ml"
+version = "0.1.0"
+dependencies = [
+ "ariel-os",
+ "ariel-os-boards",
+ "microflow",
+ "nalgebra",
+]
+
+[[package]]
 name = "ariel-os"
 version = "0.4.0"
 dependencies = [
- "ariel-os-bench",
  "ariel-os-boards",
  "ariel-os-buildinfo",
  "ariel-os-debug",
@@ -65,15 +74,6 @@ dependencies = [
  "esp-alloc",
  "esp-hal",
  "esp-metadata-generated",
-]
-
-[[package]]
-name = "ariel-os-bench"
-version = "0.4.0"
-dependencies = [
- "cfg-if",
- "cortex-m",
- "esp-hal",
 ]
 
 [[package]]
@@ -313,16 +313,6 @@ name = "ariel-os-stm32-mapping"
 version = "0.4.0"
 dependencies = [
  "embassy-stm32",
-]
-
-[[package]]
-name = "ariel-os-tiny-ml"
-version = "0.1.0"
-dependencies = [
- "ariel-os",
- "ariel-os-boards",
- "microflow",
- "nalgebra",
 ]
 
 [[package]]

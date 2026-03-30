@@ -1,2 +1,0 @@
-arm-none-eabi-size build/bin/rpi-pico2/cargo/thumbv8m.main-none-eabihf/release/ariel-os-tiny-ml
-nm --print-size --size-sort --demangle=rust --radix=d build/bin/rpi-pico2-w/cargo/thumbv8m.main-none-eabihf/release/ariel-os-tiny-ml

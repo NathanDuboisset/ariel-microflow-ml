@@ -6,13 +6,6 @@ dependencies = [
   "tensorflow[and-cuda]==2.18.0",
   "numpy",
   "tensorflow-model-optimization",
-  # IREE SavedModel -> MLIR import.
-  "iree-compiler",
-  "iree-tools-tf",
-  # ONNX export (for conda iree-import-onnx pipeline).
-  "tf2onnx",
-  "onnx==1.16.1",
-  # Notebook support
   "ipykernel",
   "jupyter",
 ]
@@ -20,4 +13,9 @@ dependencies = [
 [build-system]
 requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+dev = [
+    "types-tensorflow>=2.18.0.20260322",
+]
 

@@ -72,28 +72,28 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "ipykernel" },
-    { name = "iree-compiler" },
-    { name = "iree-tools-tf" },
     { name = "jupyter" },
     { name = "numpy" },
-    { name = "onnx" },
     { name = "tensorflow", extra = ["and-cuda"] },
     { name = "tensorflow-model-optimization" },
-    { name = "tf2onnx" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "types-tensorflow" },
 ]
 
 [package.metadata]
 requires-dist = [
     { name = "ipykernel" },
-    { name = "iree-compiler" },
-    { name = "iree-tools-tf" },
     { name = "jupyter" },
     { name = "numpy" },
-    { name = "onnx", specifier = "==1.16.1" },
     { name = "tensorflow", extras = ["and-cuda"], specifier = "==2.18.0" },
     { name = "tensorflow-model-optimization" },
-    { name = "tf2onnx" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "types-tensorflow", specifier = ">=2.18.0.20260322" }]
 
 [[package]]
 name = "arrow"
@@ -524,29 +524,6 @@ wheels = [
 ]
 
 [[package]]
-name = "iree-compiler"
-version = "20241104.1068"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "sympy" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/86/1bd674964d67effad4d9187afa75814ce8505bb6998b4e1bdaa73a46e355/iree_compiler-20241104.1068-cp312-cp312-macosx_13_0_universal2.whl", hash = "sha256:2077182344235f75b8c7707586f24a3b68d556ccc5771e0926f14819d6115e03", size = 57591226, upload-time = "2024-11-05T23:33:58.704Z" },
-    { url = "https://files.pythonhosted.org/packages/28/ee/4e6bbeace037bb449dd539912afcba3ea5a88f2fe9494d74161a200f1532/iree_compiler-20241104.1068-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:87f49105a10825a68055226e7e3fbf313590d766ad208ab70d35f6ab79044775", size = 71931372, upload-time = "2024-11-05T23:34:04.302Z" },
-    { url = "https://files.pythonhosted.org/packages/3b/6e/87756b7be8b2235c398283589e7591f917b8df4c5cef1d660ea43d15ec85/iree_compiler-20241104.1068-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:39eb1c01a208399c844ac961ef52aeb6be780db4f87fac59ceeb59b8d8c68719", size = 70763482, upload-time = "2024-11-05T23:34:10.82Z" },
-    { url = "https://files.pythonhosted.org/packages/0f/c5/ccb4a5355c3231d2d9d55740b4024cf6b1f3a1155a1a5268db0425c59ca3/iree_compiler-20241104.1068-cp312-cp312-win_amd64.whl", hash = "sha256:2e7e88b4e63caf529c0ad4f1e55cfd7624e0ac0bf4034cd7e0f935f23251073c", size = 49804740, upload-time = "2024-11-05T23:34:15.776Z" },
-]
-
-[[package]]
-name = "iree-tools-tf"
-version = "20260316.1567"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/a0/93cb274c5d7c666f905de49fbaca575898f9f0cde1fd2c5f4d7cd17f866e/iree_tools_tf-20260316.1567-py3-none-any.whl", hash = "sha256:8bf3eb8035e2c8b1218a39f1743d99c94b793744d3bcfe3299d6f77c280bef64", size = 32614, upload-time = "2026-03-19T23:21:06.419Z" },
-]
-
-[[package]]
 name = "isoduration"
 version = "20.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -969,15 +946,6 @@ wheels = [
 ]
 
 [[package]]
-name = "mpmath"
-version = "1.3.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e0/47/dd32fa426cc72114383ac549964eecb20ecfd886d1e5ccf5340b55b02f57/mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f", size = 508106, upload-time = "2023-03-07T16:47:11.061Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c", size = 536198, upload-time = "2023-03-07T16:47:09.197Z" },
-]
-
-[[package]]
 name = "namex"
 version = "0.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1224,23 +1192,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/65/93/4934518fecebfa5696f179ee984d028a39589515d7994bd7e30da396a89a/nvidia_nvjitlink_cu12-12.5.82-py3-none-manylinux2014_aarch64.whl", hash = "sha256:98103729cc5226e13ca319a10bbf9433bbbd44ef64fe72f45f067cacc14b8d27", size = 20774026, upload-time = "2024-07-18T19:38:04.752Z" },
     { url = "https://files.pythonhosted.org/packages/75/bc/e0d0dbb85246a086ab14839979039647bce501d8c661a159b8b019d987b7/nvidia_nvjitlink_cu12-12.5.82-py3-none-manylinux2014_x86_64.whl", hash = "sha256:f9b37bc5c8cf7509665cb6ada5aaa0ce65618f2332b7d3e78e9790511f111212", size = 21298879, upload-time = "2024-07-01T16:41:53.953Z" },
     { url = "https://files.pythonhosted.org/packages/a4/1a/10828d8c7b8addc4a435dd57112ea544d594ef899a86700897558531492e/nvidia_nvjitlink_cu12-12.5.82-py3-none-win_amd64.whl", hash = "sha256:e782564d705ff0bf61ac3e1bf730166da66dd2fe9012f111ede5fc49b64ae697", size = 161776086, upload-time = "2024-07-01T16:48:04.936Z" },
-]
-
-[[package]]
-name = "onnx"
-version = "1.16.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "numpy" },
-    { name = "protobuf" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/74/be/242d02ebf7fe115bd695166eeea58b2206c9fa62de22cf9cbf8986fa8d27/onnx-1.16.1.tar.gz", hash = "sha256:8299193f0f2a3849bfc069641aa8e4f93696602da8d165632af8ee48ec7556b6", size = 12306956, upload-time = "2024-05-23T17:56:58.051Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/1b/08d8dac6bfb4f3b9c323600549c14cc96fe9a3d0edbe492feead0572cedb/onnx-1.16.1-cp312-cp312-macosx_11_0_universal2.whl", hash = "sha256:32e11d39bee04f927fab09f74c46cf76584094462311bab1aca9ccdae6ed3366", size = 16508491, upload-time = "2024-05-23T17:55:44.927Z" },
-    { url = "https://files.pythonhosted.org/packages/47/56/8e87c498d6e8c9754a4d5ffe01e2a4b2a6ab68d7a2c657dc5bfa7560fb04/onnx-1.16.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8884bf53b552873c0c9b072cb8625e7d4e8f3cc0529191632d24e3de58a3b93a", size = 15792296, upload-time = "2024-05-23T17:55:49.256Z" },
-    { url = "https://files.pythonhosted.org/packages/14/a9/bb3a9aedbdc6a5ab8423d3d246a8e6d14f527de0d992fefa55d5b23fd7f0/onnx-1.16.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:595b2830093f81361961295f7b0ebb6000423bcd04123d516d081c306002e387", size = 15924056, upload-time = "2024-05-23T17:55:53.257Z" },
-    { url = "https://files.pythonhosted.org/packages/80/b8/2fe98bc5802e6cfe878acd8f2c5d193c081434aa27dc9ce34f157e1132d5/onnx-1.16.1-cp312-cp312-win32.whl", hash = "sha256:2fde4dd5bc278b3fc8148f460bce8807b2874c66f48529df9444cdbc9ecf456b", size = 14337703, upload-time = "2024-05-23T17:55:57.061Z" },
-    { url = "https://files.pythonhosted.org/packages/85/53/09fed1c26b53a0b07791badaea96ffc46734b2251fc0d651bfda1163c159/onnx-1.16.1-cp312-cp312-win_amd64.whl", hash = "sha256:e69ad8c110d8c37d759cad019d498fdf3fd24e0bfaeb960e52fed0469a5d2974", size = 14438296, upload-time = "2024-05-23T17:56:00.538Z" },
 ]
 
 [[package]]
@@ -1628,18 +1579,6 @@ wheels = [
 ]
 
 [[package]]
-name = "sympy"
-version = "1.14.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "mpmath" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
-]
-
-[[package]]
 name = "tensorboard"
 version = "2.18.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1757,22 +1696,6 @@ wheels = [
 ]
 
 [[package]]
-name = "tf2onnx"
-version = "1.17.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "flatbuffers" },
-    { name = "numpy" },
-    { name = "onnx" },
-    { name = "protobuf" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/62/09bc2e8a91c717a2b37b6631ad08535f1f04d951010abbc5b6e446c988eb/tf2onnx-1.17.0.tar.gz", hash = "sha256:998dc1841d5e2405226d985f28287570569034b7609924a52fb297b42462c1c1", size = 591633, upload-time = "2026-03-04T19:37:23.256Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/98/83/05d2b28b2246118105c48a7a8c02e3419f2ea0fff0bb49a8bd7876e7373c/tf2onnx-1.17.0-py3-none-any.whl", hash = "sha256:64506e0ff12ddb21918b5659541577a4e9eec06d6bb1f2c7c4ebba5b09f30dba", size = 839132, upload-time = "2026-03-04T19:37:21.236Z" },
-]
-
-[[package]]
 name = "tinycss2"
 version = "1.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1808,6 +1731,41 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/eb/79/72064e6a701c2183016abbbfedaba506d81e30e232a68c9f0d6f6fcd1574/traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7", size = 161621, upload-time = "2024-04-19T11:11:49.746Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/00/c0/8f5d070730d7836adc9c9b6408dec68c6ced86b304a9b26a14df072a6e8c/traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f", size = 85359, upload-time = "2024-04-19T11:11:46.763Z" },
+]
+
+[[package]]
+name = "types-protobuf"
+version = "6.32.1.20260221"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/5f/e2/9aa4a3b2469508bd7b4e2ae11cbedaf419222a09a1b94daffcd5efca4023/types_protobuf-6.32.1.20260221.tar.gz", hash = "sha256:6d5fb060a616bfb076cbb61b4b3c3969f5fc8bec5810f9a2f7e648ee5cbcbf6e", size = 64408, upload-time = "2026-02-21T03:55:13.916Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2e/e8/1fd38926f9cf031188fbc5a96694203ea6f24b0e34bd64a225ec6f6291ba/types_protobuf-6.32.1.20260221-py3-none-any.whl", hash = "sha256:da7cdd947975964a93c30bfbcc2c6841ee646b318d3816b033adc2c4eb6448e4", size = 77956, upload-time = "2026-02-21T03:55:12.894Z" },
+]
+
+[[package]]
+name = "types-requests"
+version = "2.33.0.20260327"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/02/5f/2e3dbae6e21be6ae026563bad96cbf76602d73aa85ea09f13419ddbdabb4/types_requests-2.33.0.20260327.tar.gz", hash = "sha256:f4f74f0b44f059e3db420ff17bd1966e3587cdd34062fe38a23cda97868f8dd8", size = 23804, upload-time = "2026-03-27T04:23:38.737Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/55/951e733616c92cb96b57554746d2f65f4464d080cc2cc093605f897aba89/types_requests-2.33.0.20260327-py3-none-any.whl", hash = "sha256:fde0712be6d7c9a4d490042d6323115baf872d9a71a22900809d0432de15776e", size = 20737, upload-time = "2026-03-27T04:23:37.813Z" },
+]
+
+[[package]]
+name = "types-tensorflow"
+version = "2.18.0.20260322"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "types-protobuf" },
+    { name = "types-requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4a/cb/81dfaa2680031a6e087bcdfaf1c0556371098e229aee541e21c81a381065/types_tensorflow-2.18.0.20260322.tar.gz", hash = "sha256:135dc6ca06cc647a002e1bca5c5c99516fde51efd08e46c48a9b1916fc5df07f", size = 259030, upload-time = "2026-03-22T04:09:14.069Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5b/0c/a178061450b640e53577e2c423ad22bf5d3f692f6bfeeb12156d02b531ef/types_tensorflow-2.18.0.20260322-py3-none-any.whl", hash = "sha256:d8776b6daacdb279e64f105f9dcbc0b8e3544b9a2f2eb71ec6ea5955081f65e6", size = 329771, upload-time = "2026-03-22T04:09:12.844Z" },
 ]
 
 [[package]]

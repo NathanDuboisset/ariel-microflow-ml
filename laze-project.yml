@@ -5,13 +5,10 @@ imports:
     dldir: ariel-os
 
 apps:
-  - name: ariel-os-tiny-ml
+  - name: ariel-microflow-ml
     selects:
       - alloc
-      - sw/threading
-      - ?multi-core
-    # Mirror `ariel-os-hello` defaults to make the runner happy.
     env:
       global:
         executor_stacksize_required:
-          - "65536"
+          - "128000"

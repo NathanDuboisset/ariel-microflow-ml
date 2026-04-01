@@ -1,13 +1,20 @@
 #![no_main]
 #![no_std]
 
-use ariel_os::debug::{exit, log::info, ExitCode};
+use ariel_os::debug::{ExitCode, exit, log::info};
 use ariel_os::time::Instant;
 use microflow::model;
 use nalgebra::SMatrix;
 
+mod multicore_backend;
+
 // Exactly one model feature overall (reject none and any multi-select).
-#[cfg(not(any(feature = "lenet5", feature = "mcunet", feature = "lenet5q", feature = "mcunetq")))]
+#[cfg(not(any(
+    feature = "lenet5",
+    feature = "mcunet",
+    feature = "lenet5q",
+    feature = "mcunetq"
+)))]
 compile_error!("Enable exactly one model feature: lenet5 | mcunet | lenet5q | mcunetq");
 
 #[cfg(any(
@@ -20,17 +27,16 @@ compile_error!("Enable exactly one model feature: lenet5 | mcunet | lenet5q | mc
 ))]
 compile_error!("Enable exactly one model feature: lenet5 | mcunet | lenet5q | mcunetq");
 
-
 #[cfg(feature = "lenet5")]
-#[model("models/lenet5.tflite")]
+#[model("models/lenet5.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "mcunet")]
-#[model("models/mcunet.tflite")]
+#[model("models/mcunet.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "lenet5q")]
-#[model("models/lenet5_quantized.tflite")]
+#[model("models/lenet5_quantized.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "mcunetq")]
@@ -60,13 +66,9 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
     [img]
 }
 
-
-#[ariel_os::task(autostart)]
-async fn main() {
-    info!(
-        "microflow on {} board.",
-        ariel_os::buildinfo::BOARD
-    );
+#[ariel_os::thread(autostart, priority = 2,stacksize = 24000)]
+fn main() {
+    info!("microflow on {} board and core {:?}", ariel_os::buildinfo::BOARD, ariel_os::thread::current_tid().unwrap());
     #[cfg(feature = "lenet5")]
     info!("Model: lenet5 (models/lenet5.tflite)");
     #[cfg(feature = "lenet5q")]
@@ -119,7 +121,10 @@ async fn main() {
     }
 
     let avg_us = total_us / RUNS;
-    info!("Inference timing: runs={} total_us={} avg_us={}", RUNS, total_us, avg_us);
+    info!(
+        "Inference timing: runs={} total_us={} avg_us={}",
+        RUNS, total_us, avg_us
+    );
     info!("Last predicted class={}", last_predicted_class);
 
     exit(ExitCode::SUCCESS);

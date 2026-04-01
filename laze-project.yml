@@ -8,6 +8,8 @@ apps:
   - name: ariel-microflow-ml
     selects:
       - alloc
+      - sw/threading
+      - ?multi-core
     env:
       global:
         executor_stacksize_required:

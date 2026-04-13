@@ -2,10 +2,43 @@
 
 This repo contains a few examples of how to use microflow to load tflite files and then run it on embedded devices using Ariel OS.
 
+Using microflow and ariel os as the infrastructure, for a full Rust code
+
+- MicroFlow repo: `https://github.com/matteocarnelos/microflow-rs`
+- MicroFlow paper: `https://arxiv.org/pdf/2409.19432`
+
+## Prerequisites
+
+# Rust and toolchain
+
+# Ariel OS
+
+https://ariel-os.github.io/ariel-os/dev/docs/book/getting-started.html
+
+# MicroFlow (fork)
+
+This project uses a custom fork of MicroFlow with parallelization support.
+Clone it **next to** this repo (the path `../microflow-rs` is expected by `Cargo.toml`):
+
+```
+git clone --branch feat/parallelization \
+  https://github.com/NathanDuboisset/microflow-rs.git \
+  ../microflow-rs
+```
+
+The dependency in `Cargo.toml` resolves to that local path:
+```toml
+microflow = { default-features = false, path = "../microflow-rs" }
+```
+
+
+
 # Training / saving models
 
-First step is to train and save a model using python and TenserFlow(version at most TODO) as a tflite format
+First step is to train and save a model using python and TenserFlowas a tflite format
 Now only supporting quantized models
+
+For that, use uv from astral (https://docs.astral.sh/uv/ ) to manage packages and version ; then run the notebook corresponding to your desired model to generate / update the tflite file
 
 # Rust link
 

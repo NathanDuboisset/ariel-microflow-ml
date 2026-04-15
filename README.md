@@ -31,7 +31,7 @@ The dependency in `Cargo.toml` resolves to that local path:
 microflow = { default-features = false, path = "../microflow-rs" }
 ```
 
-
+Change linking in `Cargo.toml` if you clone it elsewhere
 
 # Training / saving models
 
@@ -61,3 +61,17 @@ runtime_file_path = build/bin/{your-board-ariel-id}/cargo/thumbv8m.main-none-eab
 arm-none-eabi-size runtime_file_path
 nm --print-size --size-sort --demangle=rust --radix=d runtime_file_path
 ```
+
+
+## Current state of work / TODO
+
+- explore threading options :
+  - one "helper" thread ?
+  - optimizations on the use of ariel ?
+  - to what size should microflow(see branch for parrallelization) delegate operations ? small operations mean too much overhead etc : per channel jobs, per row ? delegate activations, reshapes etc ?
+
+- implement operators in microflow
+  - to make torch work (uses reshape / transpose when compiling to tflite format) ; currently reshape is supported but not transpose
+  - other operators for more complex network : split, add, mean,
+  - better quantization, does not support per channel quantization yet.
+  - only supports quantized models

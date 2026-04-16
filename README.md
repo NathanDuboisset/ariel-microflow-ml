@@ -38,7 +38,14 @@ Change linking in `Cargo.toml` if you clone it elsewhere
 First step is to train and save a model using python and TenserFlowas a tflite format
 Now only supporting quantized models
 
-For that, use uv from astral (https://docs.astral.sh/uv/ ) to manage packages and version ; then run the notebook corresponding to your desired model to generate / update the tflite file
+For that, use uv from astral (https://docs.astral.sh/uv/ ) to manage packages and version ; then run the notebook corresponding to your desired model to generate / update the tflite file.
+
+Since torch and tensorflow can be conflicting on versions, there is two folders to generate, each having its own env,
+In a folder, run 
+```
+uv sync
+```
+then run notebooks with the .venv created in that folder
 
 # Rust link
 

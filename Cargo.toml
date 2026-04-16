@@ -13,11 +13,10 @@ portable-atomic = { version = "1", default-features = false }
 [features]
 default = []
 
-lenet5 = []
-lenet5q = []
-
-mcunet = []
-mcunetq = []
+lenet5qtf = []
+mcunetqtf = []
+lenet5qtorch = []
+mcunetqtorch = []
 
 
 run = []

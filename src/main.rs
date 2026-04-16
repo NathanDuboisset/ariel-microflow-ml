@@ -6,8 +6,6 @@ use ariel_os::time::Instant;
 use microflow::model;
 use nalgebra::SMatrix;
 
-mod multicore_backend;
-
 // Exactly one model feature overall (reject none and any multi-select).
 #[cfg(not(any(
     feature = "lenet5qtf",
@@ -18,19 +16,19 @@ mod multicore_backend;
 compile_error!("Enable exactly one model feature: lenet5qtf | mcunetqtf | lenet5qtorch | mcunetqtorch");
 
 #[cfg(feature = "lenet5qtf")]
-#[model("models/lenet5_quantized.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/lenet5_quantized.tflite")]
 struct MyModel;
 
 #[cfg(feature = "mcunetqtf")]
-#[model("models/mcunet_quantized.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/mcunet_quantized.tflite")]
 struct MyModel;
 
 #[cfg(feature = "lenet5qtorch")]
-#[model("models/lenet5_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/lenet5_quantized_torch.tflite")]
 struct MyModel;
 
 #[cfg(feature = "mcunetqtorch")]
-#[model("models/mcunet_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/mcunet_quantized_torch.tflite")]
 struct MyModel;
 
 #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtorch"))]

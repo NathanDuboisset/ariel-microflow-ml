@@ -10,40 +10,30 @@ mod multicore_backend;
 
 // Exactly one model feature overall (reject none and any multi-select).
 #[cfg(not(any(
-    feature = "lenet5",
-    feature = "mcunet",
-    feature = "lenet5q",
-    feature = "mcunetq"
+    feature = "lenet5qtf",
+    feature = "mcunetqtf",
+    feature = "lenet5qtorch",
+    feature = "mcunetqtorch"
 )))]
-compile_error!("Enable exactly one model feature: lenet5 | mcunet | lenet5q | mcunetq");
+compile_error!("Enable exactly one model feature: lenet5qtf | mcunetqtf | lenet5qtorch | mcunetqtorch");
 
-#[cfg(any(
-    all(feature = "lenet5", feature = "mcunet"),
-    all(feature = "lenet5", feature = "lenet5q"),
-    all(feature = "lenet5", feature = "mcunetq"),
-    all(feature = "mcunet", feature = "lenet5q"),
-    all(feature = "mcunet", feature = "mcunetq"),
-    all(feature = "lenet5q", feature = "mcunetq"),
-))]
-compile_error!("Enable exactly one model feature: lenet5 | mcunet | lenet5q | mcunetq");
-
-#[cfg(feature = "lenet5")]
-#[model("models/lenet5.tflite", crate::multicore_backend::ArielBackend)]
+#[cfg(feature = "lenet5qtf")]
+#[model("models/lenet5_quantized.tflite",crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
-#[cfg(feature = "mcunet")]
-#[model("models/mcunet.tflite", crate::multicore_backend::ArielBackend)]
+#[cfg(feature = "mcunetqtf")]
+#[model("models/mcunet_quantized.tflite",crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
-#[cfg(feature = "lenet5q")]
-#[model("models/lenet5_quantized.tflite", crate::multicore_backend::ArielBackend)]
+#[cfg(feature = "lenet5qtorch")]
+#[model("models/lenet5_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
-#[cfg(feature = "mcunetq")]
-#[model("models/mcunet_quantized.tflite")]
+#[cfg(feature = "mcunetqtorch")]
+#[model("models/mcunet_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
-#[cfg(any(feature = "lenet5", feature = "lenet5q"))]
+#[cfg(any(feature = "lenet5qtf", feature = "lenet5qtorch"))]
 fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
     type Img = SMatrix<[f32; 1], 28, 28>;
     let img: Img = SMatrix::from_fn(|r, c| {
@@ -53,7 +43,7 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
     [img]
 }
 
-#[cfg(any(feature = "mcunet", feature = "mcunetq"))]
+#[cfg(any(feature = "mcunetqtf", feature = "mcunetqtorch"))]
 fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
     type Img = SMatrix<[f32; 3], 32, 32>;
     let img: Img = SMatrix::from_fn(|r, c| {
@@ -69,14 +59,14 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
 #[ariel_os::thread(autostart, priority = 2,stacksize = 24000)]
 fn main() {
     info!("microflow on {} board and core {:?}", ariel_os::buildinfo::BOARD, ariel_os::thread::current_tid().unwrap());
-    #[cfg(feature = "lenet5")]
-    info!("Model: lenet5 (models/lenet5.tflite)");
-    #[cfg(feature = "lenet5q")]
+    #[cfg(feature = "lenet5qtf")]
     info!("Model: lenet5_quantized (models/lenet5_quantized.tflite)");
-    #[cfg(feature = "mcunet")]
-    info!("Model: mcunet (models/mcunet.tflite)");
-    #[cfg(feature = "mcunetq")]
+    #[cfg(feature = "lenet5qtorch")]
+    info!("Model: lenet5_quantized_torch (models/lenet5_quantized_torch.tflite)");
+    #[cfg(feature = "mcunetqtf")]
     info!("Model: mcunet_quantized (models/mcunet_quantized.tflite)");
+    #[cfg(feature = "mcunetqtorch")]
+    info!("Model: mcunet_quantized_torch (models/mcunet_quantized_torch.tflite)");
 
     const RUNS: u64 = 10;
     let mut total_us: u64 = 0;

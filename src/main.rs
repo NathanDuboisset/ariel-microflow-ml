@@ -54,7 +54,7 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
     [img]
 }
 
-#[ariel_os::thread(autostart, priority = 2,stacksize = 24000)]
+#[ariel_os::thread(autostart, priority = 2,stacksize = 128000)]
 fn main() {
     info!("microflow on {} board and core {:?}", ariel_os::buildinfo::BOARD, ariel_os::thread::current_tid().unwrap());
     #[cfg(feature = "lenet5qtf")]

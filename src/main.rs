@@ -18,19 +18,19 @@ mod multicore_backend;
 compile_error!("Enable exactly one model feature: lenet5qtf | mcunetqtf | lenet5qtorch | mcunetqtorch");
 
 #[cfg(feature = "lenet5qtf")]
-#[model("models/lenet5_quantized.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/lenet5_quantized.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "mcunetqtf")]
-#[model("models/mcunet_quantized.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/mcunet_quantized.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "lenet5qtorch")]
-#[model("models/lenet5_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/lenet5_quantized_torch.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(feature = "mcunetqtorch")]
-#[model("models/mcunet_quantized_torch.tflite",crate::multicore_backend::ArielBackend)]
+#[model("models/mcunet_quantized_torch.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
 #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtorch"))]
@@ -56,7 +56,7 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 32, 32, 3> {
     [img]
 }
 
-#[ariel_os::thread(autostart, priority = 2,stacksize = 24000)]
+#[ariel_os::thread(autostart, priority = 2,stacksize = 128000)]
 fn main() {
     info!("microflow on {} board and core {:?}", ariel_os::buildinfo::BOARD, ariel_os::thread::current_tid().unwrap());
     #[cfg(feature = "lenet5qtf")]

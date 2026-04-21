@@ -21,7 +21,7 @@ This project uses a custom fork of MicroFlow with parallelization support.
 Clone it **next to** this repo (the path `../microflow-rs` is expected by `Cargo.toml`):
 
 ```
-git clone --branch feat/parallelization \
+git clone --branch ariel-os-compatibility \
   https://github.com/NathanDuboisset/microflow-rs.git \
   ../microflow-rs
 ```

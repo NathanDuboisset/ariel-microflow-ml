@@ -8,6 +8,7 @@ dependencies = [
   "tensorflow-model-optimization",
   "ipykernel",
   "jupyter",
+  "tflite>=2.18.0",
 ]
 
 [build-system]

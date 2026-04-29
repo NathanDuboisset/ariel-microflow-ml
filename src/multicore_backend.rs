@@ -1,4 +1,8 @@
-use ariel_os::debug::log::*;
+#![no_main]
+#![no_std]
+
+use ariel_os::{debug::log::*, thread::CoreAffinity};
+use ariel_os::thread::sync::Channel;
 use portable_atomic::{AtomicUsize, Ordering};
 use microflow::backend::Backend;
 
@@ -8,52 +12,22 @@ pub struct Job {
     pub arg: usize,
 }
 
-#[repr(align(64))]
-struct PaddedAtomic(AtomicUsize);
-
-const JOB_QUEUE_SIZE: usize = 32;
-
-static mut JOB_QUEUE: [Option<Job>; JOB_QUEUE_SIZE] = [None; JOB_QUEUE_SIZE];
-static Q_HEAD: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
-static Q_TAIL: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
-static JOB_REMAINING: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
+static WORK_QUEUE: Channel<Job> = Channel::new();
+static JOB_REMAINING: AtomicUsize = AtomicUsize::new(0);
 
 pub struct ArielBackend;
 
 impl Backend for ArielBackend {
     fn defer_job(func: fn(usize), arg: usize) {
-        JOB_REMAINING.0.fetch_add(1, Ordering::Relaxed);
-        
-        let head = Q_HEAD.0.load(Ordering::Relaxed);
-        unsafe {
-            JOB_QUEUE[head % JOB_QUEUE_SIZE] = Some(Job { func, arg });
-        }
-        Q_HEAD.0.store(head + 1, Ordering::Release);
+        JOB_REMAINING.fetch_add(1, Ordering::Relaxed);
+        WORK_QUEUE.send(&Job { func, arg });
     }
 
     fn wait() {
-        while JOB_REMAINING.0.load(Ordering::Acquire) > 0 {
-            if !process_one_job() {
-                core::hint::spin_loop();
-            }
+        while JOB_REMAINING.load(Ordering::Acquire) > 0 {
+            ariel_os::thread::yield_same();
         }
     }        
-}
-
-fn process_one_job() -> bool {
-    let tail = Q_TAIL.0.load(Ordering::Relaxed);
-    let head = Q_HEAD.0.load(Ordering::Acquire);
-    
-    if tail < head {
-        if Q_TAIL.0.compare_exchange(tail, tail + 1, Ordering::Acquire, Ordering::Relaxed).is_ok() {
-            let job = unsafe { JOB_QUEUE[tail % JOB_QUEUE_SIZE].unwrap() };
-            (job.func)(job.arg);
-            
-            JOB_REMAINING.0.fetch_sub(1, Ordering::Release);
-            return true;
-        }
-    }
-    false
 }
 
 fn worker() {
@@ -62,13 +36,28 @@ fn worker() {
     info!("[{:?}] Worker running at [{:?}] ...", my_id, core);
 
     loop {
-        if !process_one_job() {
-            core::hint::spin_loop();
-        }
+        let job = WORK_QUEUE.recv();
+        (job.func)(job.arg);
+        JOB_REMAINING.fetch_sub(1, Ordering::Release);
     }
 }
 
-#[ariel_os::thread(autostart, priority = 1, stacksize = 160000)]
+#[ariel_os::thread(
+    autostart, 
+    priority = 1, 
+    affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(0)),
+    stacksize = 17000
+)]
 fn thread0() {
+    worker();
+}
+
+#[ariel_os::thread(
+    autostart, 
+    priority = 1, 
+    affinity = ariel_os::thread::CoreAffinity::one(ariel_os::thread::CoreId::new(1)),
+    stacksize = 17000
+)]
+fn thread1() {
     worker();
 }

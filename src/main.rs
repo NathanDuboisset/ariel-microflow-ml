@@ -14,7 +14,8 @@ mod multicore_backend;
     feature = "lenet5qtf",
     feature = "lenet5qtorch",
     feature = "mobilenetv1",
-    feature = "lenet5qtfdualcore"
+    feature = "lenet5qtfdualcore",
+    feature = "mobilenetv1dualcore"
 )))]
 compile_error!("Enable exactly one model feature: lenet5qtf | lenet5qtfdualcore | lenet5qtorch | mobilenetv1");
 
@@ -34,6 +35,10 @@ struct MyModel;
 #[model("models_provided/mobilenetv1.tflite")]
 struct MyModel;
 
+#[cfg(feature = "mobilenetv1dualcore")]
+#[model("models_provided/mobilenetv1.tflite", crate::multicore_backend::ArielBackend)]
+struct MyModel;
+
 #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
 fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
     type Img = SMatrix<[f32; 1], 28, 28>;
@@ -44,15 +49,17 @@ fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
     [img]
 }
 
-#[cfg(feature = "mobilenetv1")]
+#[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
 fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 96, 96, 1> {
     let input = Buffer2D::<[f32; 1], 96, 96>::from_element([0.5_f32]);
     [input]
 }
 
-#[ariel_os::thread(autostart, priority = 2,stacksize = 128000)]
+#[ariel_os::thread(autostart, priority = 2,stacksize = 390000)]
 fn main() {
-    info!("microflow on {} board and core {:?}", ariel_os::buildinfo::BOARD, ariel_os::thread::current_tid().unwrap());
+    let my_id = ariel_os::thread::current_tid().unwrap();
+    let core = ariel_os::thread::core_id();
+    info!("microflow on {} board and thread [{:?}] core [{:?}]", ariel_os::buildinfo::BOARD, my_id, core);
     #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore"))]
     info!("Model: lenet5_quantized (models/lenet5_quantized.tflite)");
     #[cfg(feature = "lenet5qtorch")]
@@ -71,7 +78,7 @@ fn main() {
         let end = Instant::now().as_micros();
 
         total_us = total_us.wrapping_add(end.wrapping_sub(start));
-        #[cfg(any(feature = "mobilenetv1"))]
+        #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
         {
             if prediction.nrows() > 0 && prediction.ncols() > 1 {
                 info!(

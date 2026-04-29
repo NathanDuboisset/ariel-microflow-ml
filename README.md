@@ -81,9 +81,12 @@ For model that have a torch and tensorflow version, it should not make any diffe
 Timings are averaged over 10 runs
 
 
-model | cores | time (us) | main thread stack | helper stack | executor stack
-lenet5q | mono core | 51396 | 19000 | - | 128000
-lenet5q | dual core | 41701 | 30000 | 128000 | 128000
+| model       | cores     | time (ms) | main thread stack (ko) | helper stack (ko) |
+|-------------|-----------|-----------|-------------------------|-------------------|
+| lenet5q     | mono core | 51        | 19                      | -                 |
+| lenet5q     | dual core | 41        | 19                      | 1                 |
+| mobilenetv1 | mono core | 3537      | 390                     | -                 |
+| mobilenetv1 | dual core | 2267      | 390                     | 17                |
 
 
 ## Current state of work / TODO

@@ -14,9 +14,11 @@ portable-atomic = { version = "1", default-features = false }
 default = []
 
 lenet5qtf = []
-mcunetqtf = []
 lenet5qtorch = []
-mcunetqtorch = []
+lenet5qtfdualcore = []
+
+mobilenetv1 = []
+mobilenetv1dualcore = []
 
 
 run = []
@@ -24,3 +26,4 @@ run = []
 unexpected_cfgs = { level = "warn", check-cfg = [
   'cfg(context, values(any()))',
 ] }
+

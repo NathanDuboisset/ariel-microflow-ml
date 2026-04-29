@@ -36,7 +36,7 @@ Change linking in `Cargo.toml` if you clone it elsewhere
 # Training / saving models
 
 First step is to train and save a model using python and TenserFlowas a tflite format
-Now only supporting quantized models
+Now only supporting quantized models.
 
 For that, use uv from astral (https://docs.astral.sh/uv/ ) to manage packages and version ; then run the notebook corresponding to your desired model to generate / update the tflite file.
 
@@ -47,14 +47,18 @@ uv sync
 ```
 then run notebooks with the .venv created in that folder
 
+In addition, we provide the mobilenetv1 model file, coming from the microflow repository : models need to be made "microflow compatible", by using only implemented operations, so we need to bake some operations(like padding or batch normalisation) into the weights.
+
 # Rust link
 
 Simple linking using the microflow macro mechanic gives access to these models, for use with Ariel OS
 
 Then run using
 ```
-laze build -b {your-board-ariel-id} run --features {lenet5q/mcunetq}
+laze build -b {your-board-ariel-id} run --features {lenet5qtf/lenet5qtorch/...}
 ```
+
+Measurement for RAM are noted under, and are impactful in `laze-project.yml`, `src/multicore_backend.rs`, `src/main.rs`
 
 # Benchmarking
 To see RAM / Flash usage
@@ -69,6 +73,21 @@ arm-none-eabi-size runtime_file_path
 nm --print-size --size-sort --demangle=rust --radix=d runtime_file_path
 ```
 
+# Benchmarks
+
+Here are the current results by model, depending on the use of dual core or not.
+Measurement are made and tested using a rpi-pico2-w
+For model that have a torch and tensorflow version, it should not make any difference so we run tests with the tensorflow version.
+Timings are averaged over 10 runs
+
+
+| model       | cores     | time (ms) | main thread stack (ko) | helper stack (ko) |
+|-------------|-----------|-----------|-------------------------|-------------------|
+| lenet5q     | mono core | 53        | 14                      | -                 |
+| lenet5q     | dual core | 41        | 14                      | 1                 |
+| mobilenetv1 | mono core | 3537      | 320                     | -                 |
+| mobilenetv1 | dual core | 2267      | 320                     | 17                |
+
 
 ## Current state of work / TODO
 
@@ -78,7 +97,6 @@ nm --print-size --size-sort --demangle=rust --radix=d runtime_file_path
   - to what size should microflow(see branch for parrallelization) delegate operations ? small operations mean too much overhead etc : per channel jobs, per row ? delegate activations, reshapes etc ?
 
 - implement operators in microflow
-  - to make torch work (uses reshape / transpose when compiling to tflite format) ; currently reshape is supported but not transpose
   - other operators for more complex network : split, add, mean,
-  - better quantization, does not support per channel quantization yet.
+  - better quantization (per channel)
   - only supports quantized models

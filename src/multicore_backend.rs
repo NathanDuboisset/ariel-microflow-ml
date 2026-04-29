@@ -11,7 +11,9 @@ pub struct Job {
 #[repr(align(64))]
 struct PaddedAtomic(AtomicUsize);
 
-static mut JOB_QUEUE: [Option<Job>; 16] = [None; 16];
+const JOB_QUEUE_SIZE: usize = 32;
+
+static mut JOB_QUEUE: [Option<Job>; JOB_QUEUE_SIZE] = [None; JOB_QUEUE_SIZE];
 static Q_HEAD: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
 static Q_TAIL: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
 static JOB_REMAINING: PaddedAtomic = PaddedAtomic(AtomicUsize::new(0));
@@ -24,7 +26,7 @@ impl Backend for ArielBackend {
         
         let head = Q_HEAD.0.load(Ordering::Relaxed);
         unsafe {
-            JOB_QUEUE[head % 16] = Some(Job { func, arg });
+            JOB_QUEUE[head % JOB_QUEUE_SIZE] = Some(Job { func, arg });
         }
         Q_HEAD.0.store(head + 1, Ordering::Release);
     }
@@ -44,7 +46,7 @@ fn process_one_job() -> bool {
     
     if tail < head {
         if Q_TAIL.0.compare_exchange(tail, tail + 1, Ordering::Acquire, Ordering::Relaxed).is_ok() {
-            let job = unsafe { JOB_QUEUE[tail % 16].unwrap() };
+            let job = unsafe { JOB_QUEUE[tail % JOB_QUEUE_SIZE].unwrap() };
             (job.func)(job.arg);
             
             JOB_REMAINING.0.fetch_sub(1, Ordering::Release);
@@ -61,7 +63,7 @@ fn worker() {
 
     loop {
         if !process_one_job() {
-            core::hint::spin_loop();
+            ariel_os::thread::yield_now()
         }
     }
 }

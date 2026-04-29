@@ -63,7 +63,7 @@ fn worker() {
 
     loop {
         if !process_one_job() {
-            ariel_os::thread::yield_now()
+            core::hint::spin_loop();
         }
     }
 }

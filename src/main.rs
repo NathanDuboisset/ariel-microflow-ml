@@ -4,10 +4,14 @@
 use ariel_os::debug::{ExitCode, exit, log::info};
 use ariel_os::time::Instant;
 use microflow::model;
-use microflow::buffer::Buffer2D;
-use nalgebra::SMatrix;
 
 mod multicore_backend;
+#[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
+#[path = "../samples/lenet/sample.rs"]
+mod lenet_samples;
+#[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
+#[path = "../samples/mobilenetv1/sample.rs"]
+mod mobilenet_samples;
 
 // Exactly one model feature overall (reject none and any multi-select).
 #[cfg(not(any(
@@ -39,23 +43,7 @@ struct MyModel;
 #[model("models_provided/mobilenetv1.tflite", crate::multicore_backend::ArielBackend)]
 struct MyModel;
 
-#[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
-fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 28, 28, 1> {
-    type Img = SMatrix<[f32; 1], 28, 28>;
-    let img: Img = SMatrix::from_fn(|r, c| {
-        let v = if ((r + c) & 1) == 0 { 0.5 } else { 0.0 };
-        [v]
-    });
-    [img]
-}
-
-#[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
-fn make_input_sample() -> microflow::buffer::Buffer4D<f32, 1, 96, 96, 1> {
-    let input = Buffer2D::<[f32; 1], 96, 96>::from_element([0.5_f32]);
-    [input]
-}
-
-#[ariel_os::thread(autostart, priority = 2,stacksize = 390000)]
+#[ariel_os::thread(autostart, priority = 2,stacksize = 320000)]
 fn main() {
     let my_id = ariel_os::thread::current_tid().unwrap();
     let core = ariel_os::thread::core_id();
@@ -69,62 +57,46 @@ fn main() {
 
     const RUNS: u64 = 10;
     let mut total_us: u64 = 0;
-    let input = make_input_sample();
+    #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
+    let samples = [lenet_samples::digit_0(), lenet_samples::digit_1()];
+    #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
+    let samples = [mobilenet_samples::PERSON, mobilenet_samples::NO_PERSON];
 
     for i_run in 0..RUNS {
-        info!("Running inference... run {}", i_run);
+        let sample_idx = (i_run % samples.len() as u64) as usize;
+        let input = samples[sample_idx];
+        info!("Running inference... run {} sample_{}", i_run, sample_idx);
         let start = Instant::now().as_micros();
-        let prediction = MyModel::predict(input);
+        let prediction = MyModel::predict_quantized(input);
         let end = Instant::now().as_micros();
 
         total_us = total_us.wrapping_add(end.wrapping_sub(start));
         #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
         {
-            if prediction.nrows() > 0 && prediction.ncols() > 1 {
-                info!(
-                    "Prediction shape={}x{}, first_values=({}, {})",
-                    prediction.nrows(),
-                    prediction.ncols(),
-                    prediction[(0, 0)],
-                    prediction[(0, 1)]
-                );
-            } else {
-                info!(
-                    "Prediction shape={}x{}",
-                    prediction.nrows(),
-                    prediction.ncols()
-                );
-            }
+            let no_person_score = prediction[(0, 0)];
+            let person_score = prediction[(0, 1)];
+            let person_detected = person_score > no_person_score;
+            info!(
+                "sample_{} => person_detected={} (scores: no_person={}, person={})",
+                sample_idx,
+                person_detected,
+                no_person_score,
+                person_score
+            );
         }
 
         #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
         {
-            let predicted_class = if prediction.nrows() == 1 {
-                let mut best_col: usize = 0;
-                let mut best_val = prediction[(0, 0)];
-                for c in 1..prediction.ncols() {
-                    let v = prediction[(0, c)];
-                    if v > best_val {
-                        best_val = v;
-                        best_col = c;
-                    }
+            let mut predicted_class: usize = 0;
+            let mut best_val = prediction[(0, 0)];
+            for c in 1..10 {
+                let v = prediction[(0, c)];
+                if v > best_val {
+                    best_val = v;
+                    predicted_class = c;
                 }
-                best_col
-            } else if prediction.ncols() == 1 {
-                let mut best_row: usize = 0;
-                let mut best_val = prediction[(0, 0)];
-                for r in 1..prediction.nrows() {
-                    let v = prediction[(r, 0)];
-                    if v > best_val {
-                        best_val = v;
-                        best_row = r;
-                    }
-                }
-                best_row
-            } else {
-                prediction.iamax_full().1
-            };
-            info!("Predicted class={}", predicted_class);
+            }
+            info!("sample_{} => predicted_class={}", sample_idx, predicted_class);
         }
     }
 

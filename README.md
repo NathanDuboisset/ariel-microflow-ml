@@ -83,10 +83,10 @@ Timings are averaged over 10 runs
 
 | model       | cores     | time (ms) | main thread stack (ko) | helper stack (ko) |
 |-------------|-----------|-----------|-------------------------|-------------------|
-| lenet5q     | mono core | 51        | 19                      | -                 |
-| lenet5q     | dual core | 41        | 19                      | 1                 |
-| mobilenetv1 | mono core | 3537      | 390                     | -                 |
-| mobilenetv1 | dual core | 2267      | 390                     | 17                |
+| lenet5q     | mono core | 53        | 14                      | -                 |
+| lenet5q     | dual core | 41        | 14                      | 1                 |
+| mobilenetv1 | mono core | 3537      | 320                     | -                 |
+| mobilenetv1 | dual core | 2267      | 320                     | 17                |
 
 
 ## Current state of work / TODO

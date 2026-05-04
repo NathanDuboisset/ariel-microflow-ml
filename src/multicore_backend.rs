@@ -25,7 +25,7 @@ impl Backend for ArielBackend {
 
     fn wait() {
         while JOB_REMAINING.load(Ordering::Acquire) > 0 {
-            ariel_os::thread::yield_same();
+            core::hint::spin_loop();
         }
     }        
 }

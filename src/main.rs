@@ -52,10 +52,13 @@ fn main() {
     info!("Model: lenet5_quantized (models/lenet5_quantized.tflite)");
     #[cfg(feature = "lenet5qtorch")]
     info!("Model: lenet5_quantized_torch (models/lenet5_quantized_torch.tflite)");
-    #[cfg(feature = "mobilenetv1")]
+    #[cfg(any(feature = "mobilenetv1", feature = "mobilenetv1dualcore"))]
     info!("Model: mobilenetv1 (models/mobilenetv1.tflite)");
 
-    const RUNS: u64 = 10;
+    #[cfg(any(feature = "lenet5qtfdualcore", feature = "mobilenetv1dualcore"))]
+    info!("Running on dual core");
+
+    const RUNS: u64 = 4;
     let mut total_us: u64 = 0;
     #[cfg(any(feature = "lenet5qtf", feature = "lenet5qtfdualcore", feature = "lenet5qtorch"))]
     let samples = [lenet_samples::digit_0(), lenet_samples::digit_1()];

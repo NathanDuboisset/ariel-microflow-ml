@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ariel-os = { path = "build/imports/ariel-os/src/ariel-os", features = ["time", "threading"] }
+ariel-os = { path = "build/imports/ariel-os/src/ariel-os", features = ["time", "threading", "alloc"] }
 ariel-os-boards = { path = "build/imports/ariel-os/src/ariel-os-boards" }
 microflow = { default-features = false, path = "../microflow-rs" }
 nalgebra = { version = "0.32", default-features = false }
